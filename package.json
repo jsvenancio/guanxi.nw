@@ -1,0 +1,16 @@
+{
+    "name" : "guanxi",
+    "main" : "index.html",
+    "description" : "GUI for inxi system information script",
+    "version" : "0.1.0",
+    "window" : {
+        "title" : "guanxi",
+        "toolbar" : true,
+        "frame" : true,
+        "width" : 600,
+        "height" : 400
+    },
+    "webkit" : {
+        "plugin" : true
+    }
+}
