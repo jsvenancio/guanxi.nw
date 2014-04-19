@@ -1,57 +1,29 @@
 /**
  * Created with IntelliJ IDEA.
  * User: Scott
- * Date: 4/13/14
- * Time: 2:11 AM
+ * Date: 4/15/14
+ * Time: 8:55 PM
  * To change this template use File | Settings | File Templates.
  */
+
 Ext.define('Guanxi.view.Display', {
-    extend: 'Ext.panel.Panel',
+    extend : 'Ext.tree.Panel',
 
-    alias : 'widget.viewdisplay',
+    alias : 'widget.display',
 
-    store : 'Components',
+    store : 'Inxi',
 
-    layout : 'fit',
+    title : 'inxi - System Info',
 
-    title : 'inxi',
+    collapsible : false,
 
-    initComponent : function() {
-        console.log('init.display.view: ');
+    useArrows : true,
 
-        this.html = 'Before Read';
+    rootVisible : false,
 
-        this.callParent();
+    multiSelect : false,
 
-        this.update('After Read');
-
-//        this.readFile(this.parseFile);
-    },
-
-    readFile : function(callback) {
-        var me = this;
-        var file = require('fs');
-        file.readFile('./inxiout.txt', 'utf-8', function(error, contents) {
-            var lines = contents.split('\n');
-            var keys = {};
-            var key = '';
-            for (var i = 0, len = lines.length; i < len; i++) {
-                var line = lines[i];
-                if (line.match(/^[ ]/)) {
-                    keys[key] = keys[key] + ' ' + line.replace('\n', '').trim();
-                } else {
-                    key = line.split(':', 1)[0];
-                    keys[key] = line.substring(key.length + 1, line.length).trim();
-                }
-            }
-            callback(me, keys);
-        });
-    },
-
-    parseFile : function(scope, object) {
-        console.log('Guanxi.view.Display: ');
-        console.log(object);
-        scope.update('After read');
+    viewConfig:{
+        markDirty:false
     }
-
 });

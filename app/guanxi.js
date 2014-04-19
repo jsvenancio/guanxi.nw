@@ -18,7 +18,7 @@ Ext.application({
     ],
 
     stores: [
-        'ComponentTree'
+        'Inxi'
     ],
 
     controllers: [
@@ -26,6 +26,6 @@ Ext.application({
     ],
 
     views : [
-        'DisplayTree'
+        'Display'
     ]
 });

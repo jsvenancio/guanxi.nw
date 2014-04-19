@@ -6,89 +6,119 @@ Ext.define('Guanxi.controller.Display', {
     ],
 
     stores : [
-        'ComponentTree'
+        'Inxi'
     ],
 
     views : [
-        'DisplayTree'
+        'Display'
     ],
 
     init : function() {
+        Ext.data.NodeInterface.decorate('Guanxi.model.Inxi');
         this.control({
-            'viewport > displaytree' : {
-                itemclick : this.onItemclicked,
-                render : this.onViewRendered
+            'viewport > display' : {
+                beforerender : this.onViewRendered,
+                scope : this
             }
         });
     },
 
-    onItemclicked : function(view, record) {
-    },
-
-    onViewRendered : function(displayTree) {
-        // debugger;
-        this.readFile(this.parseFile);
-    },
-
-    readFile : function(callback) {
-        var me = this;
+    onViewRendered : function() {
         var file = require('fs');
-        file.readFile('./inxiout.txt', 'utf-8', function(error, contents) {
-            callback(me, error, contents);
-        });
+        var inxi = file.readFileSync('./inxioutMod.txt').toString();
+        this.parseFile(inxi);
     },
 
-    parseLines : function(hash) {
-        var keys = Ext.Object.getKeys(hash);
-
-        Ext.each(keys, function(key){
-            debugger;
-            var words = hash[key].split(' ');
-            var subKeys = [];
-            for (var i = 0, len = words.length; i < len; i++) {
-                var word = words[i];
-                if (word.indexOf(':', word.length - word.length) !== -1) {
-                    subKeys.push(word);
-                }
-            }
-            debugger;
-            if (subKeys.length > 0) {
-                var values = hash[key].split(':');
-                var subHash = {};
-
-                for (var i = 0, len = values.length; i < len; i++) {
-                    var value = values[i];
-                    for (var j = 0, len = subKeys.length; i < len; j++) {
-                        var subKey = subKeys[j];
-                        if (value.indexOf(subKey) !== -1) {
-                            subHash[subKey] = values[i + 1];
-                        }
-                    }
-                }
-            }
-            debugger;
-        });
-        // console.log('Guanxi.view.Display: ');
-        // console.log(object);
-        // scope.update('After read');
-        debugger;
-    },
-
-    parseFile : function(scope, error, contents) {
+    parseFile : function(contents) {
         var rawLines = contents.split('\n');
         var hash = {};
         var key = '';
-        for (var i = 0, len = rawLines.length; i < len; i++) {
-            var line = rawLines[i];
+        var store = this.getInxiStore();
+        var rootNode = store.getRootNode();
+
+        Ext.each(rawLines, function(line) {
             if (line.match(/^[ ]/)) {
+                var record = rootNode.findChild('key', key);
                 hash[key] = hash[key] + ' ' + line.replace('\n', '').trim();
+                record.setChildText(hash[key]);
             } else {
                 key = line.split(':', 1)[0];
                 if (!Ext.isEmpty(key)) {
+                    var topRec = Ext.create('Guanxi.model.Inxi');
                     hash[key] = line.substring(key.length + 1, line.length).trim();
+                    topRec.setKey(key);
+                    topRec.setText(key);
+                    topRec.setChildText(hash[key]);
+                    rootNode.appendChild(topRec);
                 }
             }
+        },this);
+        this.parseLines(hash);
+    },
+
+    parseLines : function(hash) {
+        var rootNodeKeys = Ext.Object.getKeys(hash);
+        var store = this.getInxiStore();
+        var rootNode = store.getRootNode();
+
+        Ext.each(rootNodeKeys, function(nodeKey){
+            var record = rootNode.findChild('key', nodeKey);
+            this.parser(record, true);
+            record.setChildText('');
+        },this);
+    },
+
+    parser : function(record, isMasterNode) {
+        var subRec;
+        var keys = record.getChildText().split(':');
+        var subHash = {};
+
+        if (isMasterNode && keys.length == 1) {
+            var subRec = Ext.create('Guanxi.model.Inxi');
+            subRec.setText(keys[0]);
+            subRec.setLeaf(true);
+            record.appendChild(subRec);
+        } else {
+            var count = 1;
+            Ext.each(keys, function(key){
+                key = key.trim();
+                var lastSet = count + 1 == keys.length  && isMasterNode;
+                var isNested = count < keys.length;
+                var words = key.split(' ');
+                var word = words[words.length - 1];
+                if (lastSet) {
+                    var keyNode = Ext.create('Guanxi.model.Inxi');
+                    keyNode.setKey(word);
+                    keyNode.setText(word);
+
+                    var subRec = Ext.create('Guanxi.model.Inxi');
+                    subRec.setKey(word + 'Node');
+                    subRec.setText(keys[count].trim());
+                    subRec.setLeaf(true);
+
+                    keyNode.appendChild(subRec);
+                    record.appendChild(keyNode);
+                } else if (isNested && isMasterNode) {
+                    var keyNode = Ext.create('Guanxi.model.Inxi');
+                    keyNode.setKey(word);
+                    keyNode.setText(word);
+
+                    var subRec = Ext.create('Guanxi.model.Inxi');
+                    var text = keys[count].trim();
+                    subRec.setKey(word + 'Node');
+                    subRec.setChildText(text);
+                    this.parser(subRec, false);
+                    subRec.setChildText('');
+                    subRec.setLeaf(true);
+
+                    keyNode.appendChild(subRec);
+                    record.appendChild(keyNode);
+                } else if (!isMasterNode) {
+                    delete words[words.length - 1];
+                    record.setText(words.join().replace(/,/g, ' ').trim());
+                }
+                count++;
+            }, this);
         }
-        scope.parseLines(hash);
     }
 });

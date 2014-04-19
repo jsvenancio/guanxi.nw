@@ -10,10 +10,10 @@ Ext.define('Guanxi.view.Viewport', {
 
     layout : 'fit',
 
-    requires : 'Guanxi.view.DisplayTree',
+    requires : 'Guanxi.view.Display',
 
     items : [{
         region: 'center',
-        xtype : 'displaytree'
+        xtype : 'display'
     }]
 });
