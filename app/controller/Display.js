@@ -24,13 +24,37 @@ Ext.define('Guanxi.controller.Display', {
     },
 
     onViewRendered : function() {
-        var file = require('fs');
-        var inxi = file.readFileSync('./inxioutMod.txt').toString();
-        this.parseFile(inxi);
+        this.getSysInfo(this.parseSysInfo);
     },
 
-    parseFile : function(contents) {
-        var rawLines = contents.split('\n');
+    getSysInfo : function(callback) {
+        var me = this;
+
+        var spawn = require('child_process').exec;
+
+        var sysInfo = spawn('inxi -F -c0', function(error, stdout, stderr) {
+            callback(error, stdout, stderr, me);
+        });
+    },
+
+    /**
+     * Bring scope back in line.  Using 'me' as the scope, then calling
+     * the method, sets the scope for the rest of the called methods.
+     *
+     * The callback puts scope at the 'window', this method causes the scope
+     * to be 'this.display'
+     * @param err: errors in the caller
+     * @param stdout: output of the process
+     * @param stderr: errors of the process
+     * @param me
+     */
+    parseSysInfo : function(err, stdout, stderr, me) {
+        me.parseOutput(err, stdout, stderr);
+    },
+
+    parseOutput : function(err, stdout, stderr) {
+        var stdout = stdout.toString();
+        var rawLines = stdout.split('\n');
         var hash = {};
         var key = '';
         var store = this.getInxiStore();
