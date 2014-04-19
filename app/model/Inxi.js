@@ -1,10 +1,3 @@
-/**
- * Created with IntelliJ IDEA.
- * User: Scott
- * Date: 4/13/14
- * Time: 11:15 PM
- * To change this template use File | Settings | File Templates.
- */
 Ext.define('Guanxi.model.Inxi', {
     extend : 'Ext.data.Model',
 
@@ -23,6 +16,10 @@ Ext.define('Guanxi.model.Inxi', {
             type : 'string'
         }
     ],
+
+    /*
+        Getters and setters for ease of use
+     */
 
     getKey : function() {
         return this.get('key');

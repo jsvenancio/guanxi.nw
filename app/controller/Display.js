@@ -23,10 +23,17 @@ Ext.define('Guanxi.controller.Display', {
         });
     },
 
+    /**
+     *  Function called before display view is rendered
+     */
     onViewRendered : function() {
         this.getSysInfo(this.parseSysInfo);
     },
 
+    /**
+     * Retrieve the system information
+     * @param callback
+     */
     getSysInfo : function(callback) {
         var me = this;
 
@@ -52,6 +59,13 @@ Ext.define('Guanxi.controller.Display', {
         me.parseOutput(err, stdout, stderr);
     },
 
+    /**
+     * Initial parse of the output, basically splits the lines into
+     * perspective types, e.g. Graphics, System, CPU
+     * @param err
+     * @param stdout
+     * @param stderr
+     */
     parseOutput : function(err, stdout, stderr) {
         var stdout = stdout.toString();
         var rawLines = stdout.split('\n');
@@ -80,6 +94,10 @@ Ext.define('Guanxi.controller.Display', {
         this.parseLines(hash);
     },
 
+    /**
+     * Iterate over each type and setup objects
+     * @param hash
+     */
     parseLines : function(hash) {
         var rootNodeKeys = Ext.Object.getKeys(hash);
         var store = this.getInxiStore();
@@ -92,6 +110,11 @@ Ext.define('Guanxi.controller.Display', {
         },this);
     },
 
+    /**
+     * Parses a record (text line) into an object
+     * @param record
+     * @param isMasterNode
+     */
     parser : function(record, isMasterNode) {
         var subRec;
         var keys = record.getChildText().split(':');
@@ -110,7 +133,7 @@ Ext.define('Guanxi.controller.Display', {
                 var isNested = count < keys.length;
                 var words = key.split(' ');
                 var word = words[words.length - 1];
-                if (lastSet) {
+                if (lastSet) { // the last line should contain no additional keys
                     var keyNode = Ext.create('Guanxi.model.Inxi');
                     keyNode.setKey(word);
                     keyNode.setText(word);
@@ -122,7 +145,7 @@ Ext.define('Guanxi.controller.Display', {
 
                     keyNode.appendChild(subRec);
                     record.appendChild(keyNode);
-                } else if (isNested && isMasterNode) {
+                } else if (isNested && isMasterNode) {// line may contain additional keys, get them and their objects
                     var keyNode = Ext.create('Guanxi.model.Inxi');
                     keyNode.setKey(word);
                     keyNode.setText(word);
@@ -137,7 +160,7 @@ Ext.define('Guanxi.controller.Display', {
 
                     keyNode.appendChild(subRec);
                     record.appendChild(keyNode);
-                } else if (!isMasterNode) {
+                } else if (!isMasterNode) {// create the key:text object when other keys exist in 'text'
                     delete words[words.length - 1];
                     record.setText(words.join().replace(/,/g, ' ').trim());
                 }
