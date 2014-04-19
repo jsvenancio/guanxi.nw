@@ -5,9 +5,9 @@
     "version" : "0.1.1",
     "window" : {
         "title" : "guanxi",
-        "toolbar" : true,
+        "toolbar" : false,
         "frame" : true,
-        "width" : 600,
+        "width" : 400,
         "height" : 400
     },
     "webkit" : {
