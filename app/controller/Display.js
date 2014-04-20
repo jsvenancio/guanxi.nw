@@ -23,17 +23,15 @@ Ext.define('Guanxi.controller.Display', {
         });
     },
 
-    /**
-     *  Function called before display view is rendered
-     */
     onViewRendered : function() {
-        this.getSysInfo(this.parseSysInfo);
+        // only works on linux
+        if (/^linux/.test(process.platform)) {
+            this.getSysInfo(this.parseSysInfo);
+        } else {
+            this.errorHandler('Platform not supported.  Only GNU/Linux 32 and 64 bit platforms are supported.');
+        }
     },
 
-    /**
-     * Retrieve the system information
-     * @param callback
-     */
     getSysInfo : function(callback) {
         var me = this;
 
@@ -59,45 +57,41 @@ Ext.define('Guanxi.controller.Display', {
         me.parseOutput(err, stdout, stderr);
     },
 
-    /**
-     * Initial parse of the output, basically splits the lines into
-     * perspective types, e.g. Graphics, System, CPU
-     * @param err
-     * @param stdout
-     * @param stderr
-     */
     parseOutput : function(err, stdout, stderr) {
-        var stdout = stdout.toString();
-        var rawLines = stdout.split('\n');
-        var hash = {};
-        var key = '';
-        var store = this.getInxiStore();
-        var rootNode = store.getRootNode();
+        debugger;
+        if (Ext.isEmpty(err) && Ext.isEmpty(stderr)) {
+            var stdout = stdout.toString();
+            var rawLines = stdout.split('\n');
+            var hash = {};
+            var key = '';
+            var store = this.getInxiStore();
+            var rootNode = store.getRootNode();
 
-        Ext.each(rawLines, function(line) {
-            if (line.match(/^[ ]/)) {
-                var record = rootNode.findChild('key', key);
-                hash[key] = hash[key] + ' ' + line.replace('\n', '').trim();
-                record.setChildText(hash[key]);
-            } else {
-                key = line.split(':', 1)[0];
-                if (!Ext.isEmpty(key)) {
-                    var topRec = Ext.create('Guanxi.model.Inxi');
-                    hash[key] = line.substring(key.length + 1, line.length).trim();
-                    topRec.setKey(key);
-                    topRec.setText(key);
-                    topRec.setChildText(hash[key]);
-                    rootNode.appendChild(topRec);
+            Ext.each(rawLines, function(line) {
+                if (line.match(/^[ ]/)) {
+                    var record = rootNode.findChild('key', key);
+                    hash[key] = hash[key] + ' ' + line.replace('\n', '').trim();
+                    record.setChildText(hash[key]);
+                } else {
+                    key = line.split(':', 1)[0];
+                    if (!Ext.isEmpty(key)) {
+                        var topRec = Ext.create('Guanxi.model.Inxi');
+                        hash[key] = line.substring(key.length + 1, line.length).trim();
+                        topRec.setKey(key);
+                        topRec.setText(key);
+                        topRec.setChildText(hash[key]);
+                        rootNode.appendChild(topRec);
+                    }
                 }
-            }
-        },this);
-        this.parseLines(hash);
+            },this);
+            this.parseLines(hash);
+        } else if (!Ext.isEmpty(err)) {
+            this.errorHandler(err);
+        } else if (!Ext.isEmpty(stderr)) {
+            this.errorHandler(stderr);
+        }
     },
 
-    /**
-     * Iterate over each type and setup objects
-     * @param hash
-     */
     parseLines : function(hash) {
         var rootNodeKeys = Ext.Object.getKeys(hash);
         var store = this.getInxiStore();
@@ -110,11 +104,6 @@ Ext.define('Guanxi.controller.Display', {
         },this);
     },
 
-    /**
-     * Parses a record (text line) into an object
-     * @param record
-     * @param isMasterNode
-     */
     parser : function(record, isMasterNode) {
         var subRec;
         var keys = record.getChildText().split(':');
@@ -133,7 +122,7 @@ Ext.define('Guanxi.controller.Display', {
                 var isNested = count < keys.length;
                 var words = key.split(' ');
                 var word = words[words.length - 1];
-                if (lastSet) { // the last line should contain no additional keys
+                if (lastSet) {
                     var keyNode = Ext.create('Guanxi.model.Inxi');
                     keyNode.setKey(word);
                     keyNode.setText(word);
@@ -145,7 +134,7 @@ Ext.define('Guanxi.controller.Display', {
 
                     keyNode.appendChild(subRec);
                     record.appendChild(keyNode);
-                } else if (isNested && isMasterNode) {// line may contain additional keys, get them and their objects
+                } else if (isNested && isMasterNode) {
                     var keyNode = Ext.create('Guanxi.model.Inxi');
                     keyNode.setKey(word);
                     keyNode.setText(word);
@@ -160,12 +149,24 @@ Ext.define('Guanxi.controller.Display', {
 
                     keyNode.appendChild(subRec);
                     record.appendChild(keyNode);
-                } else if (!isMasterNode) {// create the key:text object when other keys exist in 'text'
+                } else if (!isMasterNode) {
                     delete words[words.length - 1];
                     record.setText(words.join().replace(/,/g, ' ').trim());
                 }
                 count++;
             }, this);
         }
+    },
+
+    errorHandler : function(errMsg) {
+        var store = this.getInxiStore();
+        var rootNode = store.getRootNode();
+        var errRec = Ext.create('Guanxi.model.Inxi');
+        errRec.setKey('error');
+        errRec.setText(errMsg);
+        // errRec.setLeaf(true);
+        errRec.set('cls', 'x-tab-noicon');
+        rootNode.appendChild(errRec);
+        debugger;
     }
 });
