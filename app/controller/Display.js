@@ -58,7 +58,6 @@ Ext.define('Guanxi.controller.Display', {
     },
 
     parseOutput : function(err, stdout, stderr) {
-        debugger;
         if (Ext.isEmpty(err) && Ext.isEmpty(stderr)) {
             stdout = stdout.toString();
             var rawLines = stdout.split('\n');
@@ -167,6 +166,5 @@ Ext.define('Guanxi.controller.Display', {
         // errRec.setLeaf(true);
         errRec.set('cls', 'x-tab-noicon');
         rootNode.appendChild(errRec);
-        debugger;
     }
 });
