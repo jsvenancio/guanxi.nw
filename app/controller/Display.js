@@ -60,7 +60,7 @@ Ext.define('Guanxi.controller.Display', {
     parseOutput : function(err, stdout, stderr) {
         debugger;
         if (Ext.isEmpty(err) && Ext.isEmpty(stderr)) {
-            var stdout = stdout.toString();
+            stdout = stdout.toString();
             var rawLines = stdout.split('\n');
             var hash = {};
             var key = '';
