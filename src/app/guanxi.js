@@ -1,6 +1,6 @@
 Ext.Loader.setConfig({enabled:true});
 
-Ext.application({
+Ext.app.Application({
     name: 'Guanxi',
 
     autoCreateViewport: true,
@@ -13,11 +13,11 @@ Ext.application({
         'Inxi'
     ],
 
-    controllers: [
+    views : [
         'Display'
     ],
 
-    views : [
-        'Display'
+    controllers: [
+        'Master'
     ]
 });
