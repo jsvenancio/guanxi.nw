@@ -1,0 +1,5 @@
+--- # guanxi configuration
+build_configuration:
+  conf_file_version : '0.0.1'
+  base:
+    welcome : 'Welcome to build'
