@@ -19,78 +19,109 @@ import stat
 import shutil
 import zipfile
 import subprocess
-# import Configuration
+from conf import Configuration
 
 class Build():
 
     def __init__(self):
         self = self
-        self.nwDir = "/home/scott/Media/Documents/node-webkit/Binaries/node-webkit-v0.9.2-linux-x64"
-        self.nwBinFile = "nw"
-        self.pakFile = "nw.pak"
-        self.shellDir = "/home/scott/Media/Documents/guanxi.nw/guanxi"
-        self.shellFile = "guanxi.sh"
-        self.sourceDir = "/home/scott/Media/Documents/guanxi.nw/src"
-        self.bldDir = "/home/scott/Media/Documents/guanxi.nw/bin"
-        self.dst = "testg.nw"
         self.build()
     #end
 
-    def getConfiguration(self, file = None, whichConfig = None):
-        pass
+    def get_configuration(self, file = 'guanxi.build.conf.yml', guanxiConf = 'guanxi_configuration'):
+        conf = Configuration(file)
+        conf.set_conf(conf.get_configuration(guanxiConf))
+        return conf
     #end
 
     def build(self):
+        conf = self.get_configuration()
+        name = conf.get('guanxi.name')
+        root = conf.get('guanxi.base.directory.root')
+        guanxiDir = os.path.join(root, conf.get('guanxi.guanxi.directory.root'))
 
-        self.zip_src()
+        ## guanxi binaries
+        execFolder = conf.get('guanxi.nodeWebkit.binary') + '-%s-' + conf.get('guanxi.base.os')
+        execDir = os.path.join(guanxiDir, conf.get('guanxi.guanxi.directory.exec'))
 
-        self.concatenate('x64', os.path.join(self.nwDir, self.nwBinFile), os.path.join(self.bldDir, self.dst), self.bldDir)
+        ## node-webkit
+        nwBitsList = conf.get('guanxi.nodeWebkit.bit')
+        nwVersionList = conf.get('guanxi.nodeWebkit.version')
+        nwFolder = conf.get('guanxi.nodeWebkit.name') + '-%s-' + conf.get('guanxi.base.os') + '-%s'
+        nwDir = os.path.join(root, conf.get('guanxi.nodeWebkit.name'), conf.get('guanxi.nodeWebkit.directory'), nwFolder)
+        nwBin = conf.get('guanxi.nodeWebkit.binary')
 
-        self.zip_bin()
+        ## guanxi source
+        sourceDir = os.path.join(root, guanxiDir, conf.get('guanxi.guanxi.directory.source'))
+
+        ## guanxi final
+        distribution = conf.get('guanxi.base.distribution')
+        distributionAbsPath = os.path.join(execDir, distribution)
+
+        # zip source for nw independent file
+        self.zip_src(sourceDir, execDir, distribution)
+
+        ## create versions
+        for nwVersion in nwVersionList:
+            gBinDir = os.path.join(execDir, execFolder % nwVersion)
+            gBin = os.path.join(gBinDir, 'guanxi')
+            print(gBinDir)
+            for nwBit in nwBitsList:
+                binHome = nwDir % (nwVersion, nwBit)
+                print(binHome)
+                nwBinLoc = os.path.join(nwDir % (nwVersion, nwBit), nwBin)
+                self.concatenate(nwBinLoc, distributionAbsPath, gBinDir, gBin)
+                pakFile = os.path.join(binHome, conf.get('guanxi.nodeWebkit.pak'))
+                pakName = conf.get('guanxi.nodeWebkit.pak')
+                shellFile = os.path.join(guanxiDir, conf.get('guanxi.guanxi.directory.shell'), conf.get('guanxi.guanxi.file.shell'))
+                shellName = conf.get('guanxi.guanxi.file.shell')
+                self.zip_bin(name, gBin, pakFile, pakName, shellFile, shellName)
     #end
 
-    def zip_bin(self):
-        binFile = 'guanxi'
-        with zipfile.ZipFile(os.path.join(self.bldDir, binFile + ".zip"), "w", zipfile.ZIP_DEFLATED) as zf:
-            ## add created binary
-            binAbsname = os.path.abspath(os.path.join(self.bldDir, binFile))
-            print(binAbsname)
-            zf.write(binAbsname, binFile)
+    def zip_src(self, sourceDir, buildDir, distribution):
+        abs_src = os.path.abspath(sourceDir)
+        binFile = os.path.join(buildDir, distribution)
 
-            ## add pak
-            pakAbsname = os.path.abspath(os.path.join(self.nwDir, self.pakFile))
-            print(pakAbsname)
-            zf.write(pakAbsname, self.pakFile)
-
-            ## add shell script
-            shAbsname = os.path.abspath(os.path.join(self.shellDir, self.shellFile))
-            print(shAbsname)
-            zf.write(shAbsname, self.shellFile)
-
+        with zipfile.ZipFile(binFile, "w", zipfile.ZIP_DEFLATED) as zf:
+            for root, subdirs, files in os.walk(sourceDir):
+                for fileName in files:
+                    absname = os.path.abspath(os.path.join(root, fileName))
+                    arcname = os.path.join(os.path.relpath(root, abs_src), fileName)
+                    zf.write(absname, arcname)
     #end
 
-    def concatenate(self, bit, bin, app, binDir):
-        binFile = os.path.join(binDir, 'guanxi')
+    def concatenate(self, bin, app, binDir, binFile):
+        ## if the directories don't exist, make them
+        try:
+            os.makedirs(binDir)
+        except:
+            pass
+
+        ## create the executable file
         with open(binFile, 'wb') as destination:
             shutil.copyfileobj(open(bin,'rb'), destination)
             shutil.copyfileobj(open(app,'rb'), destination)
 
+        ## make the binary executable
         st = os.stat(binFile)
         os.chmod(binFile, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     #end
 
-    def zip_src(self):
-        abs_src = os.path.abspath(self.sourceDir)
-        binFile = os.path.join(self.bldDir, self.dst)
+    def zip_bin(self, name, gBin, pakFile, pakName,  shellFile, shellName):
+        ## create the zip file
+        with zipfile.ZipFile(gBin + ".zip", "w", zipfile.ZIP_DEFLATED) as zf:
+            ## add created binary
+            zf.write(gBin, name)
 
-        with zipfile.ZipFile(binFile, "w", zipfile.ZIP_DEFLATED) as zf:
-            for root, subdirs, files in os.walk(self.sourceDir):
-                for fileName in files:
-                    absname = os.path.abspath(os.path.join(root, fileName))
-                    arcname = os.path.join(os.path.relpath(root, abs_src), fileName)
-                    # print(abs_src)
-                    # print(arcname)
-                    zf.write(absname, arcname)
+
+            ## add pak
+            zf.write(pakFile, pakName)
+
+            ## add shell script
+            zf.write(shellFile, shellName)
+
+        ## remove the binary now that it's zipped up
+        os.remove(gBin)
     #end
 
 

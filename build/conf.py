@@ -1,7 +1,8 @@
 import sys
 import os
 
-PyneLib = os.path.abspath("/home/scott/SilverFox/Scott/Applications/GitHub/Pyne/")
+## path to pyne library, available from https://github.com/the-real-trash80/Pyne
+PyneLib = os.path.abspath('')
 
 sys.path.insert(1,PyneLib)
 
