@@ -3,16 +3,15 @@ guanxi_configuration:
   conf_file_version : '0.0.1'
   name : 'guanxi'
   base:
-    welcome : 'Welcome to build'
-    distribution : 'guanxi.nw'
+    ext     : '.nw'
     os      : 'linux'
     directory:
       root  : ''
   nodeWebkit:
+    directory: 'Binaries'
     name    : 'node-webkit'
     binary  : 'nw'
     pak     : 'nw.pak'
-    directory: 'Binaries'
     bit :
       - 'ia32'
       - 'x64'

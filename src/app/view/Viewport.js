@@ -7,6 +7,6 @@ Ext.define('Guanxi.view.Viewport', {
 
     items : [{
         region: 'center',
-        xtype : 'display'
+        xtype : 'displayview'
     }]
 });

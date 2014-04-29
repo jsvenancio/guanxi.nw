@@ -55,7 +55,7 @@ class Build():
         sourceDir = os.path.join(root, guanxiDir, conf.get('guanxi.guanxi.directory.source'))
 
         ## guanxi final
-        distribution = conf.get('guanxi.base.distribution')
+        distribution = conf.get('guanxi.name') + conf.get('guanxi.base.ext')
         distributionAbsPath = os.path.join(execDir, distribution)
 
         # zip source for nw independent file
@@ -65,24 +65,27 @@ class Build():
         for nwVersion in nwVersionList:
             gBinDir = os.path.join(execDir, execFolder % nwVersion)
             gBin = os.path.join(gBinDir, 'guanxi')
+            print('Build: ')
             print(gBinDir)
             for nwBit in nwBitsList:
                 binHome = nwDir % (nwVersion, nwBit)
-                print(binHome)
-                nwBinLoc = os.path.join(nwDir % (nwVersion, nwBit), nwBin)
+                nwBinLoc = os.path.join(binHome, nwBin)
+                print(nwBinLoc)
+                print('Concatenate: ')
                 self.concatenate(nwBinLoc, distributionAbsPath, gBinDir, gBin)
                 pakFile = os.path.join(binHome, conf.get('guanxi.nodeWebkit.pak'))
                 pakName = conf.get('guanxi.nodeWebkit.pak')
                 shellFile = os.path.join(guanxiDir, conf.get('guanxi.guanxi.directory.shell'), conf.get('guanxi.guanxi.file.shell'))
                 shellName = conf.get('guanxi.guanxi.file.shell')
-                self.zip_bin(name, gBin, pakFile, pakName, shellFile, shellName)
+                print('Final zip: ')
+                self.zip_bin(name, nwBit, gBin, pakFile, pakName, shellFile, shellName)
     #end
 
     def zip_src(self, sourceDir, buildDir, distribution):
         abs_src = os.path.abspath(sourceDir)
         binFile = os.path.join(buildDir, distribution)
 
-        with zipfile.ZipFile(binFile, "w", zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(binFile, 'w', zipfile.ZIP_DEFLATED) as zf:
             for root, subdirs, files in os.walk(sourceDir):
                 for fileName in files:
                     absname = os.path.abspath(os.path.join(root, fileName))
@@ -107,9 +110,9 @@ class Build():
         os.chmod(binFile, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     #end
 
-    def zip_bin(self, name, gBin, pakFile, pakName,  shellFile, shellName):
+    def zip_bin(self, name, nwbit, gBin, pakFile, pakName,  shellFile, shellName):
         ## create the zip file
-        with zipfile.ZipFile(gBin + ".zip", "w", zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(gBin + '-' +nwbit + '.zip', 'w', zipfile.ZIP_DEFLATED) as zf:
             ## add created binary
             zf.write(gBin, name)
 

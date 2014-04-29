@@ -1,4 +1,4 @@
-Ext.define('Guanxi.controller.Guanxi', {
+Ext.define('Guanxi.controller.Master', {
     extend: 'Ext.app.Controller',
 
     init : function() {

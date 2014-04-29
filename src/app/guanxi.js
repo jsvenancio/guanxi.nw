@@ -6,15 +6,15 @@ Ext.app.Application({
     autoCreateViewport: true,
 
     models: [
-        'Inxi'
+        'InxiModel'
     ],
 
     stores: [
-        'Inxi'
+        'InxiStore'
     ],
 
     views : [
-        'Display'
+        'DisplayView'
     ],
 
     controllers: [
